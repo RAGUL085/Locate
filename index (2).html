@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Plotter</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #logButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .location-section {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        #locationData h2, #thingSpeakChart h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        #locationData p, #thingSpeakChart p {
+            margin: 10px 0;
+            color: #666;
+        }
+        #latitude, #longitude, #tsLatitude, #tsLongitude {
+            font-weight: bold;
+        }
+        #myChart {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+
+</head>
+<body>
+    <center>  <h1>Locator</h1>
+    <button id="logButton">Locate me </button>
+
+    <section class="location-section">
+        <div id="locationData">
+            <h2>Your Location</h2>
+            <p>Latitude: <span id="latitude"></span></p>
+            <p>Longitude: <span id="longitude"></span></p>
+        </div>
+
+        
+
+        <div id="thingSpeakChart">
+           
+            <br>
+
+        </div>
+        <br>
+
+        <div id="thingSpeakChart1">
+<h2>Latitude</h2>
+        </div>
+    </section></center>
+    
+
+    <script>$(document).ready(function() {
+        if ("geolocation" in navigator) {
+            $('#logButton').click(function() {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var latitude = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+    
+                    $('#latitude').text(latitude.toFixed(6));
+                    $('#longitude').text(longitude.toFixed(6));
+    
+                    sendDataToThingSpeak(latitude, longitude);
+                }, function(error) {
+                    alert('Error occurred: ' + error.message);
+                });
+            });
+        } else {
+            alert('Geolocation is not supported by your browser.');
+        }
+    
+        fetchThingSpeakData();
+    });
+    
+    function sendDataToThingSpeak(latitude, longitude) {
+        var apiUrl = "https://api.thingspeak.com/update?api_key=P7U3HX3QE0BENUD9&field1=" + latitude + "&field2=" + longitude;
+    
+        $.ajax({
+            url: apiUrl,
+            type: 'GET',
+            success: function(response) {
+                console.log('Data sent to ThingSpeak successfully.'+response);
+    
+                
+                displayThingSpeakChart();
+                
+            },
+            error: function(error) {
+                console.log('Error sending data to ThingSpeak: ' + error);
+            }
+        });
+    }
+    
+    function fetchThingSpeakData() {
+        var apiUrl = "https://api.thingspeak.com/channels/2519392/feeds.json?results=2";
+    
+        $.getJSON(apiUrl, function(data) {
+            var feeds = data.feeds;
+            if (feeds.length > 0) {
+                var latestData = feeds[0];
+                $('#tsLatitude').text(latestData.field1);
+                $('#tsLongitude').text(latestData.field2);
+            } else {
+                console.log('No data available from ThingSpeak.');
+            }
+        });
+    }
+    
+    function displayThingSpeakChart() {
+        var iframe = '<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2519392/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15"></iframe>';
+        $('#thingSpeakChart').html(iframe);
+        
+    
+    }
+    function displayThingSpeakChart1()
+    {
+        var iframe1='<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2519392/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15"></iframe>';
+        $('#thingSpeakChart').html(iframe1);
+    }</script>
+</body>
+</html>
+
+
+      
